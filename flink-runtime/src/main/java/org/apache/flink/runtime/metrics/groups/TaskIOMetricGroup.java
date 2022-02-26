@@ -57,6 +57,8 @@ public class TaskIOMetricGroup extends ProxyMetricGroup<TaskMetricGroup> {
     private final TimerGauge hardBackPressuredTimePerSecond;
     private final Gauge<Long> maxSoftBackPressuredTime;
     private final Gauge<Long> maxHardBackPressuredTime;
+    private final MeterView mailboxThroughput;
+    private final TimerGauge mailboxLatency;
 
     private volatile boolean busyTimeEnabled;
 
@@ -100,6 +102,9 @@ public class TaskIOMetricGroup extends ProxyMetricGroup<TaskMetricGroup> {
                         hardBackPressuredTimePerSecond::getMaxSingleMeasurement);
 
         this.busyTimePerSecond = gauge(MetricNames.TASK_BUSY_TIME, this::getBusyTimePerSecond);
+        this.mailboxThroughput =
+                meter(MetricNames.MAILBOX_THROUGHPUT, new MeterView(new SimpleCounter(), 11));
+        this.mailboxLatency = gauge(MetricNames.MAILBOX_LATENCY, new TimerGauge());
     }
 
     public IOMetrics createSnapshot() {
@@ -159,6 +164,14 @@ public class TaskIOMetricGroup extends ProxyMetricGroup<TaskMetricGroup> {
     private double getBusyTimePerSecond() {
         double busyTime = idleTimePerSecond.getValue() + getBackPressuredTimeMsPerSecond();
         return busyTimeEnabled ? 1000.0 - Math.min(busyTime, 1000.0) : Double.NaN;
+    }
+
+    public MeterView getMailboxThroughput() {
+        return mailboxThroughput;
+    }
+
+    public TimerGauge getMailboxLatency() {
+        return mailboxLatency;
     }
 
     // ============================================================================================

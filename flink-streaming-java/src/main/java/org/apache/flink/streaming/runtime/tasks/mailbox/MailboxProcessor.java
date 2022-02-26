@@ -20,6 +20,8 @@ package org.apache.flink.streaming.runtime.tasks.mailbox;
 import org.apache.flink.annotation.Internal;
 import org.apache.flink.annotation.VisibleForTesting;
 import org.apache.flink.api.common.operators.MailboxExecutor;
+import org.apache.flink.metrics.Meter;
+import org.apache.flink.metrics.MeterView;
 import org.apache.flink.streaming.runtime.tasks.StreamTaskActionExecutor;
 import org.apache.flink.streaming.runtime.tasks.mailbox.TaskMailbox.MailboxClosedException;
 import org.apache.flink.util.ExceptionUtils;
@@ -99,6 +101,8 @@ public class MailboxProcessor implements Closeable {
 
     private final StreamTaskActionExecutor actionExecutor;
 
+    private final Meter processorMeter;
+
     @VisibleForTesting
     public MailboxProcessor() {
         this(MailboxDefaultAction.Controller::suspendDefaultAction);
@@ -117,11 +121,24 @@ public class MailboxProcessor implements Closeable {
             MailboxDefaultAction mailboxDefaultAction,
             TaskMailbox mailbox,
             StreamTaskActionExecutor actionExecutor) {
+        this(
+                mailboxDefaultAction,
+                mailbox,
+                actionExecutor,
+                new MeterView(MeterView.UPDATE_INTERVAL_SECONDS * 12));
+    }
+
+    public MailboxProcessor(
+            MailboxDefaultAction mailboxDefaultAction,
+            TaskMailbox mailbox,
+            StreamTaskActionExecutor actionExecutor,
+            Meter processorMeter) {
         this.mailboxDefaultAction = Preconditions.checkNotNull(mailboxDefaultAction);
         this.actionExecutor = Preconditions.checkNotNull(actionExecutor);
         this.mailbox = Preconditions.checkNotNull(mailbox);
         this.mailboxLoopRunning = true;
         this.suspendedDefaultAction = null;
+        this.processorMeter = processorMeter;
     }
 
     public MailboxExecutor getMainMailboxExecutor() {
@@ -175,6 +192,7 @@ public class MailboxProcessor implements Closeable {
     public void drain() throws Exception {
         for (final Mail mail : mailbox.drain()) {
             mail.run();
+            processorMeter.markEvent();
         }
     }
 
@@ -336,6 +354,8 @@ public class MailboxProcessor implements Closeable {
             }
             maybePauseIdleTimer();
             maybeMail.get().run();
+            processorMeter.markEvent();
+
             maybeRestartIdleTimer();
             processedSomething = true;
         }
@@ -351,6 +371,7 @@ public class MailboxProcessor implements Closeable {
                 maybePauseIdleTimer();
             }
             maybeMail.get().run();
+            processorMeter.markEvent();
             if (singleStep) {
                 break;
             }

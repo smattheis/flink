@@ -377,7 +377,11 @@ public abstract class StreamTask<OUT, OP extends StreamOperator<OUT>>
             this.environment = environment;
             this.configuration = new StreamConfig(environment.getTaskConfiguration());
             this.mailboxProcessor =
-                    new MailboxProcessor(this::processInput, mailbox, actionExecutor);
+                    new MailboxProcessor(
+                            this::processInput,
+                            mailbox,
+                            actionExecutor,
+                            environment.getMetricGroup().getIOMetricGroup().getMailboxThroughput());
             // Should be closed last.
             resourceCloser.registerCloseable(mailboxProcessor);
 
@@ -749,6 +753,8 @@ public abstract class StreamTask<OUT, OP extends StreamOperator<OUT>>
 
         scheduleBufferDebloater();
 
+        scheduleMailboxMetrics();
+
         // let the task do its work
         runMailboxLoop();
 
@@ -781,6 +787,23 @@ public abstract class StreamTask<OUT, OP extends StreamOperator<OUT>>
                                     scheduleBufferDebloater();
                                 },
                                 "Buffer size recalculation"));
+    }
+
+    private void scheduleMailboxMetrics() {
+        systemTimerService.registerTimer(
+                systemTimerService.getCurrentProcessingTime() + 1000,
+                timestamp -> {
+                    environment.getMetricGroup().getIOMetricGroup().getMailboxLatency().markStart();
+                    mainMailboxExecutor.execute(
+                            () -> {
+                                environment
+                                        .getMetricGroup()
+                                        .getIOMetricGroup()
+                                        .getMailboxLatency()
+                                        .markEnd();
+                            },
+                            "Mailbox metrics");
+                });
     }
 
     @VisibleForTesting
