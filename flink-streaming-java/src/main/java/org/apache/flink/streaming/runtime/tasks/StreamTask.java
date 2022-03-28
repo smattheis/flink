@@ -815,9 +815,9 @@ public abstract class StreamTask<OUT, OP extends StreamOperator<OUT>>
     }
 
     private void scheduleMailboxMetrics() {
-        //        systemTimerService.registerTimer(
-        //                systemTimerService.getCurrentProcessingTime() + mailboxMetricsInterval,
-        //                timestamp -> measureMailboxLatency());
+        systemTimerService.registerTimer(
+                systemTimerService.getCurrentProcessingTime() + mailboxMetricsInterval,
+                timestamp -> measureMailboxLatency());
     }
 
     @VisibleForTesting

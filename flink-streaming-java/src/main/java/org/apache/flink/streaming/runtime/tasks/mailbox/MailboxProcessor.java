@@ -198,6 +198,9 @@ public class MailboxProcessor implements Closeable {
     public void drain() throws Exception {
         for (final Mail mail : mailbox.drain()) {
             mail.run();
+            if (mail.isTimed()) {
+                mail.getTime();
+            }
             numMailsProcessed.inc();
         }
     }

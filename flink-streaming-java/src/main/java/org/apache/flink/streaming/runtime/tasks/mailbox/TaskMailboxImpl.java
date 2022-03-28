@@ -192,6 +192,9 @@ public class TaskMailboxImpl implements TaskMailbox {
     @Override
     public void put(@Nonnull Mail mail) {
         final ReentrantLock lock = this.lock;
+        if (mail.getPriority() <= 0) {
+            mail.startTime();
+        }
         lock.lock();
         try {
             checkPutStateConditions();

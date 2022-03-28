@@ -42,6 +42,8 @@ public class Mail {
 
     private final Object[] descriptionArgs;
 
+    private long startTime = 0L;
+
     private final StreamTaskActionExecutor actionExecutor;
 
     public Mail(
@@ -79,6 +81,18 @@ public class Mail {
         if (runnable instanceof Future) {
             ((Future<?>) runnable).cancel(mayInterruptIfRunning);
         }
+    }
+
+    public void startTime() {
+        this.startTime = System.currentTimeMillis();
+    }
+
+    public boolean isTimed() {
+        return this.startTime > 0;
+    }
+
+    public long getTime() {
+        return System.currentTimeMillis() - startTime;
     }
 
     @Override
