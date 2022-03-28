@@ -227,13 +227,14 @@ public interface TaskMailbox {
     @Nonnull
     State getState();
 
-    /**
-     * Returns the current number of mails in this mailbox. (This includes mails in the batch not
-     * processed yet.)
-     *
-     * @return number of mails in the mailbox.
-     */
-    int size();
+    //    /**
+    //     * Returns the current number of mails in this mailbox. (This includes mails in the batch
+    // not
+    //     * processed yet.)
+    //     *
+    //     * @return number of mails in the mailbox.
+    //     */
+    //    int size();
 
     /**
      * Runs the given code exclusively on this mailbox. No synchronized operations can be run

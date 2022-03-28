@@ -388,7 +388,11 @@ public abstract class StreamTask<OUT, OP extends StreamOperator<OUT>>
             environment
                     .getMetricGroup()
                     .getIOMetricGroup()
-                    .registerMailboxSizeSupplier(() -> mailbox.size());
+                    .registerMailboxSizeSupplier(
+                            () -> {
+                                // mailbox.size()
+                                return 0;
+                            });
 
             // Should be closed last.
             resourceCloser.registerCloseable(mailboxProcessor);
