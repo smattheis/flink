@@ -198,7 +198,7 @@ public class MailboxProcessor implements Closeable {
     public void drain() throws Exception {
         for (final Mail mail : mailbox.drain()) {
             mail.run();
-            numMailsProcessed.inc();
+            // numMailsProcessed.inc();
         }
     }
 
@@ -360,7 +360,7 @@ public class MailboxProcessor implements Closeable {
             }
             maybePauseIdleTimer();
             maybeMail.get().run();
-            numMailsProcessed.inc();
+            // numMailsProcessed.inc();
 
             maybeRestartIdleTimer();
             processedSomething = true;
@@ -377,7 +377,7 @@ public class MailboxProcessor implements Closeable {
                 maybePauseIdleTimer();
             }
             maybeMail.get().run();
-            numMailsProcessed.inc();
+            // numMailsProcessed.inc();
             if (singleStep) {
                 break;
             }
