@@ -143,7 +143,6 @@ import org.apache.flink.util.function.RunnableWithException;
 import org.apache.flink.util.function.SupplierWithException;
 
 import org.hamcrest.CoreMatchers;
-import org.hamcrest.Matchers;
 import org.junit.Assert;
 import org.junit.Rule;
 import org.junit.Test;
@@ -1399,7 +1398,7 @@ public class StreamTaskTest extends TestLogger {
                     greaterThanOrEqualTo(sleepTimeOutsideMail));
             assertThat(
                     ioMetricGroup.getSoftBackPressuredTimePerSecond().getCount(),
-                    Matchers.lessThanOrEqualTo(totalDuration - sleepTimeInsideMail));
+                    lessThanOrEqualTo(totalDuration - sleepTimeInsideMail));
             assertThat(ioMetricGroup.getIdleTimeMsPerSecond().getCount(), is(0L));
             assertEquals(numberOfProcessCalls, inputProcessor.currentNumProcessCalls);
         } finally {
@@ -1456,7 +1455,7 @@ public class StreamTaskTest extends TestLogger {
                     greaterThanOrEqualTo(sleepTimeOutsideMail));
             assertThat(
                     ioMetricGroup.getIdleTimeMsPerSecond().getCount(),
-                    Matchers.lessThanOrEqualTo(totalDuration - sleepTimeInsideMail));
+                    lessThanOrEqualTo(totalDuration - sleepTimeInsideMail));
             assertThat(ioMetricGroup.getSoftBackPressuredTimePerSecond().getCount(), is(0L));
             assertThat(ioMetricGroup.getHardBackPressuredTimePerSecond().getCount(), is(0L));
         } finally {
@@ -1789,7 +1788,9 @@ public class StreamTaskTest extends TestLogger {
                             new StreamTask<Object, StreamOperator<Object>>(mockEnvironment) {
                                 @Override
                                 protected void init() {
-                                    this.mailboxMetricsInterval = 2;
+                                    this.mailboxProcessor
+                                            .getMailboxMetricsControl()
+                                            .setLatencyMeasurementInterval(2);
                                 }
 
                                 @Override
@@ -1849,12 +1850,12 @@ public class StreamTaskTest extends TestLogger {
                             .getIOMetricGroup()
                             .getMailboxSize();
             long startTime = SystemClock.getInstance().relativeTimeMillis();
-            harness.streamTask.measureMailboxLatency();
+            harness.streamTask.mailboxProcessor.getMailboxMetricsControl().measureMailboxLatency();
             for (int i = 0; i < numMails; ++i) {
                 harness.streamTask.mainMailboxExecutor.execute(
                         () -> Thread.sleep(sleepTime), "add value");
             }
-            harness.streamTask.measureMailboxLatency();
+            harness.streamTask.mailboxProcessor.getMailboxMetricsControl().measureMailboxLatency();
 
             assertThat(mailboxSizeMetric.getValue(), greaterThanOrEqualTo(numMails));
             assertThat(mailboxLatencyMetric.getCount(), equalTo(0L));
