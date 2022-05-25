@@ -82,6 +82,13 @@ under the License.
 		</dependency>
 	</dependencies>
 
+	<repositories>
+		<repository>
+			<id>sonatype-staging</id>
+			<url>https://oss.sonatype.org/content/groups/staging/</url>
+		</repository>
+	</repositories>
+
 	<!-- build a test jar -->
 	<build>
 		<plugins>
